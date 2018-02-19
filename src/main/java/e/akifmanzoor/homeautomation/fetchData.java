@@ -1,6 +1,7 @@
 package e.akifmanzoor.homeautomation;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,14 +14,15 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class fetchData extends AsyncTask<Void,Void,String[]> {
-
-    String[] parts = {"Down","Server"};
+public class fetchData extends AsyncTask<String,Void,JSONObject> {
+    String urlStatus = "";
     @Override
-    protected String[] doInBackground(Void... voids){
+    protected JSONObject doInBackground(String... url){
         try{
-            URL url = new URL("http://192.168.0.30/TempHumidity");
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+            urlStatus = url[0];
+
+            URL connect = new URL(urlStatus);
+            HttpURLConnection httpURLConnection = (HttpURLConnection) connect.openConnection();
             InputStream inputStream = httpURLConnection.getInputStream();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -31,12 +33,10 @@ public class fetchData extends AsyncTask<Void,Void,String[]> {
                 data = data + line;
             }
 
+
             JSONObject object = new JSONObject(data);
-            parts[0] = object.getString("Temperature");
-            parts[1] = object.getString("Humidity");
 
-            return parts;
-
+            return object;
 
         } catch (MalformedURLException e){
             e.printStackTrace();
@@ -49,8 +49,8 @@ public class fetchData extends AsyncTask<Void,Void,String[]> {
     }
 
     @Override
-    protected void onPostExecute(String[] data){
+    protected void onPostExecute(JSONObject data){
         super.onPostExecute(data);
-        MainActivity.getTempSensorData(parts);
+        MainActivity.getData(data);
     }
 }
