@@ -1,20 +1,29 @@
 package e.akifmanzoor.homeautomation;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Intent;
-import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+/**
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.support.v4.app.NotificationCompat;
+**/
 
 public class MainActivity extends AppCompatActivity {
 
     public static TextView humidDisplayText;
     public static TextView tempDisplayText;
+    public static TextView photoDisplayText;
+    public static Button syncBtn;
+
+    public static fetchData process;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,18 +32,22 @@ public class MainActivity extends AppCompatActivity {
 
         humidDisplayText = (TextView) findViewById(R.id.humidDisplayText);
         tempDisplayText = (TextView) findViewById(R.id.tempDisplayText);
-        Button syncBtn = (Button) findViewById(R.id.syncBtn);
+        photoDisplayText = (TextView) findViewById(R.id.ldsDisplayText);
+
+        syncBtn = (Button) findViewById(R.id.syncBtn);
 
         syncBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 fetchData process = new fetchData();
-                process.execute();
-                notification();
+                process.execute("http://192.168.0.24:8080/tempHumidData");
+                //Cannot do this, need to wait for the above process
+                //process.execute("http://192.168.0.30/photoState");
             }
         });
     }
 
+    /****
     public void notification(){
         // prepare intent which is triggered if the
         // notification is selected
@@ -55,16 +68,23 @@ public class MainActivity extends AppCompatActivity {
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         notificationManager.notify(0, mBuilder.build());
-
     }
+    ****/
 
-    public static void getTempSensorData(String[] parts){
+    public static void getData(JSONObject data){
         try{
-            MainActivity.humidDisplayText.setText(parts[1]);
-            MainActivity.tempDisplayText.setText(parts[0]);
+            String temp = data.getString("Temperature");
+            String humid = data.getString("Humidity");
+            //String status = data.getString("status");
+            //MainActivity.photoDisplayText.setText(status);
+            MainActivity.humidDisplayText.setText(temp);
+            MainActivity.tempDisplayText.setText(humid);
         }catch (NullPointerException e){
             e.printStackTrace();
-
+        }catch (JSONException e) {
+            e.printStackTrace();
         }
     }
+
+
 }
