@@ -2,10 +2,10 @@ package e.akifmanzoor.homeautomation;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         syncBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                process = new fetchData();
                 process.execute("http://192.168.0.28:8080/tempHumidData");
                 process = new fetchData();
                 process.execute("http://192.168.0.28:8080/photoState");
