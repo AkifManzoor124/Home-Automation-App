@@ -2,6 +2,7 @@ package e.akifmanzoor.homeautomation;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -23,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     public static TextView photoDisplayText;
     public static Button syncBtn;
 
-    public static fetchData process;
+    public static fetchData process = new fetchData();;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,10 +40,9 @@ public class MainActivity extends AppCompatActivity {
         syncBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                fetchData process = new fetchData();
-                process.execute("http://192.168.0.24:8080/tempHumidData");
-                //Cannot do this, need to wait for the above process
-                //process.execute("http://192.168.0.30/photoState");
+                process.execute("http://192.168.0.28:8080/tempHumidData");
+                process = new fetchData();
+                process.execute("http://192.168.0.28:8080/photoState");
             }
         });
     }
@@ -73,12 +73,16 @@ public class MainActivity extends AppCompatActivity {
 
     public static void getData(JSONObject data){
         try{
-            String temp = data.getString("Temperature");
-            String humid = data.getString("Humidity");
-            //String status = data.getString("status");
-            //MainActivity.photoDisplayText.setText(status);
-            MainActivity.humidDisplayText.setText(temp);
-            MainActivity.tempDisplayText.setText(humid);
+
+            if(data.getString("data").contains("resistor")){
+                String status = data.getString("photoStatus");
+                MainActivity.photoDisplayText.setText(status);
+            }else{
+                String temp = data.getString("Temperature");
+                String humid = data.getString("Humidity");
+                MainActivity.humidDisplayText.setText(humid);
+                MainActivity.tempDisplayText.setText(temp);
+            }
         }catch (NullPointerException e){
             e.printStackTrace();
         }catch (JSONException e) {

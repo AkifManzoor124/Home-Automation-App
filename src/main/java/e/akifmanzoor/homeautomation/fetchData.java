@@ -33,6 +33,7 @@ public class fetchData extends AsyncTask<String,Void,JSONObject> {
                 data = data + line;
             }
 
+            Log.e("billy",data);
 
             JSONObject object = new JSONObject(data);
 
@@ -52,5 +53,6 @@ public class fetchData extends AsyncTask<String,Void,JSONObject> {
     protected void onPostExecute(JSONObject data){
         super.onPostExecute(data);
         MainActivity.getData(data);
+
     }
 }
