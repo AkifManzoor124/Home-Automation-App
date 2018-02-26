@@ -7,6 +7,7 @@ import android.net.NetworkInfo;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -22,19 +23,21 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 **/
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
 
     private static TextView humidDisplayText;
     private static TextView tempDisplayText;
     private static TextView photoDisplayText;
-    private static Button syncBtn;
+
     private static fetchData process;
-    private static boolean tempHumidStatus;
-    private static boolean photoresistorStatus;
-    private static Context context;
+    private static boolean tempHumidStatus = true;
+    private static boolean photoresistorStatus = true;
+
+    private Button syncBtn;
+
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -43,23 +46,19 @@ public class MainActivity extends AppCompatActivity {
         photoDisplayText = (TextView) findViewById(R.id.ldsDisplayText);
         syncBtn = (Button) findViewById(R.id.syncBtn);
 
-        syncBtn.setOnClickListener(new View.OnClickListener() {
+        syncBtn.setOnClickListener(new View.OnClickListener(){
             @Override
-            public void onClick(View view) {
-
+            public void onClick(View view){
                 if(isOnline()){
-                    process = new fetchData();
-                    process.execute("http://192.168.0.143:8080/");
 
-                    if(tempHumidStatus == true){
-                        process = new fetchData();
-                        process.execute("http://192.168.0.143:8080/tempHumidData");
-                    }
-                    if(photoresistorStatus == true){
-                        process = new fetchData();
-                        process.execute("http://192.168.0.143:8080/photoState");
-                    }
-                }else{
+                    process = new fetchData();
+                    process.execute("http://192.168.0.28:8080/");
+                    process = new fetchData();
+                    process.execute("http://192.168.0.28:8080/tempHumidData");
+                    process = new fetchData();
+                    process.execute("http://192.168.0.28:8080/photoState");
+
+                } else{
                     Context context = getApplicationContext();
                     CharSequence text = "Please Connect to the Internet";
                     int duration = Toast.LENGTH_SHORT;
@@ -71,41 +70,17 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /****
-    public void notification(){
-        // prepare intent which is triggered if the
-        // notification is selected
-        Intent intent = new Intent(this, MainActivity.class);
-        // use System.currentTimeMillis() to have a unique ID for the pending intent
-        PendingIntent pIntent =
-                PendingIntent.getActivity(this, (int) System.currentTimeMillis(), intent, 0);
-
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this,"1")
-                        .setSmallIcon(R.drawable.notification_icon)
-                        .setContentTitle("Temperature/Humidity Sensor")
-                        .setContentText("The Temperature is: " +
-                                        "The Humidity is: ")
-                        .setContentIntent(pIntent);
-
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        notificationManager.notify(0, mBuilder.build());
-    }
-    ****/
-
-    public static boolean isOnline(){
+    public boolean isOnline(){
         ConnectivityManager cm;
         boolean isOnline = false;
         NetworkInfo netInfo;
         try{
-            cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
             netInfo = cm.getActiveNetworkInfo();
             isOnline = netInfo != null && netInfo.isAvailable() && netInfo.isConnected();
             return isOnline;
 
-        }catch (Exception e){
+        } catch (Exception e){
             e.printStackTrace();
         }
         return isOnline;
@@ -113,16 +88,6 @@ public class MainActivity extends AppCompatActivity {
 
     public static void getData(JSONObject data){
         try{
-            if(data.getString("tempHumidSensor").equals("\"deactivated\"")) {
-                tempHumidStatus = false;
-                tempDisplayText.setText("Please Start Temperature Sensor");
-                humidDisplayText.setText("Please Start Humidity Sensor");
-            }
-            if(data.getString("photoSensor").equals("\"deactivated\"")){
-                photoresistorStatus = false;
-                photoDisplayText.setText("Please Start PhotoResistor Sensor");
-            }
-
             if (data.getString("data").contains("photoResistor")) {
                 String status = data.getString("photoStatus");
                 photoDisplayText.setText(status);
@@ -134,11 +99,10 @@ public class MainActivity extends AppCompatActivity {
                 tempDisplayText.setText(temp);
             }
 
-        }catch (NullPointerException e){
+        } catch (NullPointerException e){
             e.printStackTrace();
-        }catch (JSONException e) {
+        } catch (JSONException e){
             e.printStackTrace();
         }
     }
-
 }

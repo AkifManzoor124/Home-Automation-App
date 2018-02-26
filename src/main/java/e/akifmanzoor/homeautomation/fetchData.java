@@ -13,6 +13,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class fetchData extends AsyncTask<String,Void,JSONObject> {
+
     @Override
     protected JSONObject doInBackground(String... url){
         try{
@@ -36,10 +37,13 @@ public class fetchData extends AsyncTask<String,Void,JSONObject> {
 
         } catch (MalformedURLException e){
             e.printStackTrace();
+            Log.d("malformed","malformed");
         } catch (IOException e){
             e.printStackTrace();
+            // the ip address is wrong
         } catch (JSONException e){
             e.printStackTrace();
+            Log.d("JSONexception","JSONexception");
         }
         return null;
     }
