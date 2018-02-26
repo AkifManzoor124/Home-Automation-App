@@ -1,11 +1,16 @@
 package e.akifmanzoor.homeautomation;
 
+import android.content.Context;
+import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.util.Log;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,12 +24,14 @@ import android.support.v4.app.NotificationCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static TextView humidDisplayText;
-    public static TextView tempDisplayText;
-    public static TextView photoDisplayText;
-    public static Button syncBtn;
-
-    public static fetchData process = new fetchData();;
+    private static TextView humidDisplayText;
+    private static TextView tempDisplayText;
+    private static TextView photoDisplayText;
+    private static Button syncBtn;
+    private static fetchData process;
+    private static boolean tempHumidStatus;
+    private static boolean photoresistorStatus;
+    private static Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,16 +41,32 @@ public class MainActivity extends AppCompatActivity {
         humidDisplayText = (TextView) findViewById(R.id.humidDisplayText);
         tempDisplayText = (TextView) findViewById(R.id.tempDisplayText);
         photoDisplayText = (TextView) findViewById(R.id.ldsDisplayText);
-
         syncBtn = (Button) findViewById(R.id.syncBtn);
 
         syncBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                process = new fetchData();
-                process.execute("http://192.168.0.28:8080/tempHumidData");
-                process = new fetchData();
-                process.execute("http://192.168.0.28:8080/photoState");
+
+                if(isOnline()){
+                    process = new fetchData();
+                    process.execute("http://192.168.0.143:8080/");
+
+                    if(tempHumidStatus == true){
+                        process = new fetchData();
+                        process.execute("http://192.168.0.143:8080/tempHumidData");
+                    }
+                    if(photoresistorStatus == true){
+                        process = new fetchData();
+                        process.execute("http://192.168.0.143:8080/photoState");
+                    }
+                }else{
+                    Context context = getApplicationContext();
+                    CharSequence text = "Please Connect to the Internet";
+                    int duration = Toast.LENGTH_SHORT;
+                    Toast toast = Toast.makeText(context, text, duration);
+                    toast.show();
+                    startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
+                }
             }
         });
     }
@@ -72,24 +95,50 @@ public class MainActivity extends AppCompatActivity {
     }
     ****/
 
+    public static boolean isOnline(){
+        ConnectivityManager cm;
+        boolean isOnline = false;
+        NetworkInfo netInfo;
+        try{
+            cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            netInfo = cm.getActiveNetworkInfo();
+            isOnline = netInfo != null && netInfo.isAvailable() && netInfo.isConnected();
+            return isOnline;
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return isOnline;
+    }
+
     public static void getData(JSONObject data){
         try{
+            if(data.getString("tempHumidSensor").equals("\"deactivated\"")) {
+                tempHumidStatus = false;
+                tempDisplayText.setText("Please Start Temperature Sensor");
+                humidDisplayText.setText("Please Start Humidity Sensor");
+            }
+            if(data.getString("photoSensor").equals("\"deactivated\"")){
+                photoresistorStatus = false;
+                photoDisplayText.setText("Please Start PhotoResistor Sensor");
+            }
 
-            if(data.getString("data").contains("resistor")){
+            if (data.getString("data").contains("photoResistor")) {
                 String status = data.getString("photoStatus");
-                MainActivity.photoDisplayText.setText(status);
-            }else{
+                photoDisplayText.setText(status);
+            }
+            if (data.getString("data").contains("tempHumid")) {
                 String temp = data.getString("Temperature");
                 String humid = data.getString("Humidity");
-                MainActivity.humidDisplayText.setText(humid);
-                MainActivity.tempDisplayText.setText(temp);
+                humidDisplayText.setText(humid);
+                tempDisplayText.setText(temp);
             }
+
         }catch (NullPointerException e){
             e.printStackTrace();
         }catch (JSONException e) {
             e.printStackTrace();
         }
     }
-
 
 }

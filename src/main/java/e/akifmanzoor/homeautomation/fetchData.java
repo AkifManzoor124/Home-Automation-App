@@ -2,10 +2,8 @@ package e.akifmanzoor.homeautomation;
 
 import android.os.AsyncTask;
 import android.util.Log;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,11 +13,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class fetchData extends AsyncTask<String,Void,JSONObject> {
-    String urlStatus = "";
     @Override
     protected JSONObject doInBackground(String... url){
         try{
-            urlStatus = url[0];
+            String urlStatus = url[0];
 
             URL connect = new URL(urlStatus);
             HttpURLConnection httpURLConnection = (HttpURLConnection) connect.openConnection();
@@ -28,12 +25,10 @@ public class fetchData extends AsyncTask<String,Void,JSONObject> {
 
             String line = "", data = "";
 
-            while(line != null){
+            while(line != null) {
                 line = bufferedReader.readLine();
                 data = data + line;
             }
-
-            Log.e("billy",data);
 
             JSONObject object = new JSONObject(data);
 
@@ -52,7 +47,9 @@ public class fetchData extends AsyncTask<String,Void,JSONObject> {
     @Override
     protected void onPostExecute(JSONObject data){
         super.onPostExecute(data);
+
         MainActivity.getData(data);
+
 
     }
 }
