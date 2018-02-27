@@ -7,10 +7,19 @@ import android.net.NetworkInfo;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity{
 
@@ -18,6 +27,8 @@ public class MainActivity extends AppCompatActivity{
     private static TextView tempDisplayText;
     private static TextView photoDisplayText;
     private Button syncBtn;
+    private Retrofit retrofit;
+    private RestApi restApi;
 
 
     @Override
@@ -30,14 +41,56 @@ public class MainActivity extends AppCompatActivity{
         photoDisplayText = (TextView) findViewById(R.id.ldsDisplayText);
         syncBtn = (Button) findViewById(R.id.syncBtn);
 
+        retrofit = new Retrofit.Builder()
+                .baseUrl(RestApi.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        restApi = retrofit.create(RestApi.class);
+
+
         syncBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
                 if(isOnline()){
-                    /**
-                     * Look for the data and display the data with retrofit.
-                     */
+                    Call<TempSensor> tempData = restApi.getTempSensorData();
+                    Call<photoSensor> photoData = restApi.getphotoSensorData();
 
+                    tempData.enqueue(new Callback<TempSensor>() {
+                        @Override
+                        public void onResponse(Call<TempSensor> call, Response<TempSensor> response) {
+                            TempSensor data = response.body();
+                            if(data.getTempReading().contains("null") || data.getHumidReading().contains("null")){
+                                tempDisplayText.setText("the temp/Humid Sensor");
+                                humidDisplayText.setText("Please connect");
+                            }else {
+                                tempDisplayText.setText(data.getTempReading());
+                                humidDisplayText.setText(data.getHumidReading());
+                            }
+                        }
+                        @Override
+                        public void onFailure(Call<TempSensor> call, Throwable t) {
+                            t.printStackTrace();
+                            //I should put this on my app that it failed
+                        }
+                    });
+
+                    photoData.enqueue(new Callback<photoSensor>() {
+                        @Override
+                        public void onResponse(Call<photoSensor> call, Response<photoSensor> response) {
+                            photoSensor data = response.body();
+                            if(data.getPhotoReading().contains("null")){
+                                photoDisplayText.setText("Please Connect");
+                            }else {
+                                photoDisplayText.setText(data.getPhotoReading());
+                            }
+                        }
+                        @Override
+                        public void onFailure(Call<photoSensor> call, Throwable t) {
+                            t.printStackTrace();
+                            //I should put this on my app that it failed
+                        }
+                    });
 
                 } else{
                     Context context = getApplicationContext();
