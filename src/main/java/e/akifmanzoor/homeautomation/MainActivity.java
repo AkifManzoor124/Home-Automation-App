@@ -30,9 +30,6 @@ public class MainActivity extends AppCompatActivity{
     private static TextView photoDisplayText;
 
     private static fetchData process;
-    private static boolean tempHumidStatus = true;
-    private static boolean photoresistorStatus = true;
-
     private Button syncBtn;
 
 
