@@ -7,29 +7,16 @@ import android.net.NetworkInfo;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-/**
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Intent;
-import android.support.v4.app.NotificationCompat;
-**/
 
 public class MainActivity extends AppCompatActivity{
 
     private static TextView humidDisplayText;
     private static TextView tempDisplayText;
     private static TextView photoDisplayText;
-
-    private static fetchData process;
     private Button syncBtn;
 
 
@@ -47,13 +34,10 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onClick(View view){
                 if(isOnline()){
+                    /**
+                     * Look for the data and display the data with retrofit.
+                     */
 
-                    process = new fetchData();
-                    process.execute("http://192.168.0.28:8080/");
-                    process = new fetchData();
-                    process.execute("http://192.168.0.28:8080/tempHumidData");
-                    process = new fetchData();
-                    process.execute("http://192.168.0.28:8080/photoState");
 
                 } else{
                     Context context = getApplicationContext();
@@ -83,23 +67,4 @@ public class MainActivity extends AppCompatActivity{
         return isOnline;
     }
 
-    public static void getData(JSONObject data){
-        try{
-            if (data.getString("data").contains("photoResistor")) {
-                String status = data.getString("photoStatus");
-                photoDisplayText.setText(status);
-            }
-            if (data.getString("data").contains("tempHumid")) {
-                String temp = data.getString("Temperature");
-                String humid = data.getString("Humidity");
-                humidDisplayText.setText(humid);
-                tempDisplayText.setText(temp);
-            }
-
-        } catch (NullPointerException e){
-            e.printStackTrace();
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
 }
