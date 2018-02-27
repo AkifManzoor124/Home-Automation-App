@@ -16,13 +16,6 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/**
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Intent;
-import android.support.v4.app.NotificationCompat;
-**/
-
 public class MainActivity extends AppCompatActivity{
 
     private static TextView humidDisplayText;
@@ -47,14 +40,12 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onClick(View view){
                 if(isOnline()){
-
                     process = new fetchData();
                     process.execute("http://192.168.0.28:8080/");
                     process = new fetchData();
                     process.execute("http://192.168.0.28:8080/tempHumidData");
                     process = new fetchData();
                     process.execute("http://192.168.0.28:8080/photoState");
-
                 } else{
                     Context context = getApplicationContext();
                     CharSequence text = "Please Connect to the Internet";
