@@ -4,12 +4,12 @@ package e.akifmanzoor.homeautomation;
  * Created by Akif Manzoor on 2018-02-27.
  */
 
-public class photoSensor {
+public class PhotoSensor {
 
     private String data;
     private String photoReading;
 
-    public photoSensor(String data, String photoReading) {
+    public PhotoSensor(String data, String photoReading) {
         this.data = data;
         this.photoReading = photoReading;
     }

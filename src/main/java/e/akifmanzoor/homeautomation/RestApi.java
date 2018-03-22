@@ -9,8 +9,7 @@ import retrofit2.Call;
 
 public interface RestApi {
 
-    //String ipAddress = "";
-    String ipAddress = "192.168.0.28";
+    String ipAddress = "192.168.0.27";
     String port = "8080";
     String BASE_URL = "http://"+ipAddress+":"+port+"/sensors/";
 
@@ -18,5 +17,5 @@ public interface RestApi {
     Call<TempSensor> getTempSensorData();
 
     @GET("photoSensor")
-    Call<photoSensor> getphotoSensorData();
+    Call<PhotoSensor> getPhotoSensorData();
 }
