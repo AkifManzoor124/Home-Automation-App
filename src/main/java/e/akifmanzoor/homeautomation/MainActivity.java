@@ -1,6 +1,5 @@
 package e.akifmanzoor.homeautomation;
 
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -15,15 +14,13 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.annotations.JsonAdapter;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity {
 
     //variable definition
     private TextView humidDisplayText;
@@ -31,6 +28,7 @@ public class MainActivity extends AppCompatActivity{
     private TextView photoDisplayText;
     private TextView tempHumidStatusText;
     private TextView photoStatusDisplayText;
+
     private Button syncBtn;
     private Retrofit retrofit;
     private RestApi restApi;
@@ -48,7 +46,9 @@ public class MainActivity extends AppCompatActivity{
         photoDisplayText = (TextView) findViewById(R.id.ldsDisplayText);
         tempHumidStatusText = (TextView) findViewById(R.id.tempHumidDisplayText);
         photoStatusDisplayText = (TextView) findViewById(R.id.PhotoResistorDisplayText);
+
         syncBtn = (Button) findViewById(R.id.syncBtn);
+
         //Definition of Retrofit
         retrofit = new Retrofit.Builder()
                 .baseUrl(RestApi.BASE_URL)
@@ -57,57 +57,87 @@ public class MainActivity extends AppCompatActivity{
 
         restApi = retrofit.create(RestApi.class);
 
-         //definition for syncButton
-         syncBtn.setOnClickListener(new View.OnClickListener(){
+        //test code for syncService
+        syncBtn.setOnClickListener(new View.OnClickListener(){
             @Override
-            public void onClick(View view){
-                if(isOnline()){
-                    Call<TempSensor> tempData = restApi.getTempSensorData();
-                    Call<PhotoSensor> photoData = restApi.getPhotoSensorData();
+            public void onClick(View view) {
+                if (isOnline()){
 
-                    tempData.enqueue(new Callback<TempSensor>() {
+                    Runnable getDataRunnable = new Runnable() {
                         @Override
-                        public void onResponse(Call<TempSensor> call, Response<TempSensor> response) {
-                            TempSensor data = response.body();
-                            if(data.getTempReading().contains("null") || data.getHumidReading().contains("null")){
-                                humidDisplayText.setText("Please Connect Sensor");
-                                tempDisplayText.setText("Please Connect Sensor");
-                                tempHumidStatusText.setText("Deactive");
-                            }else {
-                                tempDisplayText.setText(data.getTempReading());
-                                humidDisplayText.setText(data.getHumidReading());
-                                tempHumidStatusText.setText("Active");
-                            }
-                        }
-                        @Override
-                        public void onFailure(Call<TempSensor> call, Throwable t) {
-                            t.printStackTrace();
-                            createToast("Server is down", Toast.LENGTH_SHORT);
-                        }
-                    });
-
-                    photoData.enqueue(new Callback<PhotoSensor>() {
-                            @Override
-                            public void onResponse(Call<PhotoSensor> call, Response<PhotoSensor> response) {
-                                PhotoSensor data = response.body();
-                                if(data.getPhotoReading().contains("null")){
-                                    photoDisplayText.setText("Please Connect Sensor");
-                                    photoStatusDisplayText.setText("Deactive");
-                                }else {
-                                    photoDisplayText.setText(data.getPhotoReading());
-                                    photoStatusDisplayText.setText("Active");
+                        public void run() {
+                            while(sync){
+                                try {
+                                    Thread.sleep(1000);
+                                    getTempHumidData();
+                                    getPhotoresistorData();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
                                 }
                             }
-                            @Override
-                            public void onFailure(Call<PhotoSensor> call, Throwable t) {
-                                t.printStackTrace();
-                            }
-                    });
+                        }
+                    };
 
-                } else{
+                    Thread getDataThread = new Thread(getDataRunnable);
+                    getDataThread.start();
+
+                }else{
                     createToast("Please Connect to the Internet", Toast.LENGTH_SHORT);
                     startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
                 }
+            }
+        });
+    }
+
+
+    public void getTempHumidData(){
+        Call<TempSensor> tempData = restApi.getTempSensorData();
+
+        tempData.enqueue(new Callback<TempSensor>() {
+            @Override
+            public void onResponse(Call<TempSensor> call, Response<TempSensor> response) {
+                TempSensor data = response.body();
+
+                if(data.getTempReading().contains("null") || data.getHumidReading().contains("null")){
+                    humidDisplayText.setText("Please Connect Sensor");
+                    tempDisplayText.setText("Please Connect Sensor");
+                    tempHumidStatusText.setText("Deactive");
+                }else {
+                    tempDisplayText.setText(data.getTempReading());
+                    humidDisplayText.setText(data.getHumidReading());
+                    tempHumidStatusText.setText("Active");
+                }
+            }
+            @Override
+            public void onFailure(Call<TempSensor> call, Throwable t) {
+                t.printStackTrace();
+                createToast("Server is Down", Toast.LENGTH_SHORT);
+            }
+        });
+    }
+
+    public void getPhotoresistorData(){
+        Call<PhotoSensor> photoData = restApi.getPhotoSensorData();
+
+        photoData.enqueue(new Callback<PhotoSensor>() {
+            @Override
+            public void onResponse(Call<PhotoSensor> call, Response<PhotoSensor> response) {
+                PhotoSensor data = response.body();
+
+
+                if(data.getPhotoReading().contains("null")){
+                    photoDisplayText.setText("Please Connect Sensor");
+                    photoStatusDisplayText.setText("Deactive");
+                }else{
+                    photoDisplayText.setText(data.getPhotoReading());
+                    photoStatusDisplayText.setText("Active");
+                }
+
+
+            }
+            @Override
+            public void onFailure(Call<PhotoSensor> call, Throwable t) {
+                t.printStackTrace();
             }
         });
     }
@@ -119,7 +149,6 @@ public class MainActivity extends AppCompatActivity{
         try{
             cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
             netInfo = cm.getActiveNetworkInfo();
-            Log.d("datatype", netInfo.getTypeName());
             isOnline = netInfo != null && netInfo.isAvailable() && netInfo.isConnected() && !netInfo.getTypeName().contains("MOBILE");
             return isOnline;
 
