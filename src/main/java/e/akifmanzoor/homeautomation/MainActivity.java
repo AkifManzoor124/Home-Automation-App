@@ -80,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
 
                     Thread getDataThread = new Thread(getDataRunnable);
                     getDataThread.start();
-
                 }else{
                     createToast("Please Connect to the Internet", Toast.LENGTH_SHORT);
                     startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
