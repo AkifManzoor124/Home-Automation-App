@@ -9,7 +9,7 @@ import retrofit2.Call;
 
 public interface RestApi {
 
-    String ipAddress = "192.168.0.27";
+    String ipAddress = "192.168.0.23";
     String port = "8080";
     String BASE_URL = "http://"+ipAddress+":"+port+"/sensors/";
 
