@@ -64,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
         sync = true;
 
 
+        
+
         //Definition of Retrofit
         retrofit = new Retrofit.Builder()
                 .baseUrl(RestApi.BASE_URL)
