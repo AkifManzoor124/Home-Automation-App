@@ -63,8 +63,25 @@ public class MainActivity extends AppCompatActivity {
 
         sync = true;
 
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Check Address");
+        builder.setMessage("Is this Address Correct?  " + RestApi.ipAddress);
 
-        
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+
+        AlertDialog ad = builder.create();
+        ad.show();
 
         //Definition of Retrofit
         retrofit = new Retrofit.Builder()
