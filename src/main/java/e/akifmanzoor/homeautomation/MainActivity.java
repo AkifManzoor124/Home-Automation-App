@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -41,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
     private TempSensor tempHumidData;
     private PhotoSensor photoSensor;
 
-    private Boolean sync;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -61,27 +61,27 @@ public class MainActivity extends AppCompatActivity {
         tempHumidData = new TempSensor("null","null","null");
         photoSensor = new PhotoSensor("null","null");
 
-        sync = true;
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Check Address");
-        builder.setMessage("Is this Address Correct?  " + RestApi.ipAddress);
+        //Dialog for Address Check
+        AlertDialog.Builder checkAddressDialog = new AlertDialog.Builder(this);
+        checkAddressDialog.setTitle("Check Address");
+        checkAddressDialog.setMessage("Is this Address Correct: " + RestApi.ipAddress + "?");
 
-        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.dismiss();
-            }
-        });
-        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+        checkAddressDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
             }
         });
 
-        AlertDialog ad = builder.create();
-        ad.show();
+        checkAddressDialog.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+
+        checkAddressDialog.create().show();
 
         //Definition of Retrofit
         retrofit = new Retrofit.Builder()
@@ -90,30 +90,28 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         restApi = retrofit.create(RestApi.class);
 
+        final Runnable dataRun = new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    while(true) {
+                        Thread.sleep(1000);
+                        getSensorData(restApi.getTempSensorData(), restApi.getPhotoSensorData());
+                    }
+                }catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+        };
+        Thread getDataThread = new Thread(dataRun);
+        getDataThread.start();
+
         //test code for syncService
         syncBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
                 if (isOnline()){
-                    Runnable getDataRunnable = new Runnable() {
-                        @Override
-                        public void run() {
-                            while(sync){
-                                try {
-                                    Thread.sleep(1000);
-                                    getTempHumidData();
-                                    getPhotoresistorData();
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    };
-                    Thread getDataThread = new Thread(getDataRunnable);
-                    getDataThread.start();
-
-                    setDataText();
-
+                    changeText();
                 }else{
                     createToast("Please Connect to the Internet", Toast.LENGTH_SHORT);
                     startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
@@ -124,7 +122,6 @@ public class MainActivity extends AppCompatActivity {
         desyncBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                sync = false;
                 humidDisplayText.setText("-");
                 tempDisplayText.setText("-");
                 tempHumidStatusText.setText("-");
@@ -134,28 +131,27 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void setDataText(){
+    private void changeText(){
         if(tempHumidData.getTempReading().contains("null") || tempHumidData.getHumidReading().contains("null")){
-            humidDisplayText.setText("Please Connect Sensor");
-            tempDisplayText.setText("Please Connect Sensor");
-            tempHumidStatusText.setText("Deactive");
+            humidDisplayText.setText("Please Connect the Sensor");
+            tempDisplayText.setText("Please Connect the Sensor");
+            tempHumidStatusText.setText("Offline");
         }else {
             tempDisplayText.setText(tempHumidData.getTempReading());
             humidDisplayText.setText(tempHumidData.getHumidReading());
-            tempHumidStatusText.setText("Active");
+            tempHumidStatusText.setText("Online");
         }
 
         if(photoSensor.getPhotoReading().contains("null")){
-            photoDisplayText.setText("Please Connect Sensor");
-            photoStatusDisplayText.setText("Deactive");
+            photoDisplayText.setText("Please Connect the Sensor");
+            photoStatusDisplayText.setText("Offline");
         }else{
             photoDisplayText.setText(photoSensor.getPhotoReading());
-            photoStatusDisplayText.setText("Active");
+            photoStatusDisplayText.setText("Online");
         }
     }
 
-    private void getTempHumidData(){
-        Call<TempSensor> tempData = restApi.getTempSensorData();
+    private void getSensorData(Call<TempSensor> tempData, Call<PhotoSensor> photoData){
 
         tempData.enqueue(new Callback<TempSensor>() {
             @Override
@@ -163,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 tempHumidData.setData(response.body().getData());
                 tempHumidData.setTempReading(response.body().getTempReading());
                 tempHumidData.setHumidReading(response.body().getHumidReading());
+
             }
             @Override
             public void onFailure(Call<TempSensor> call, Throwable t) {
@@ -170,10 +167,6 @@ public class MainActivity extends AppCompatActivity {
                 createToast("Server is Down", Toast.LENGTH_SHORT);
             }
         });
-    }
-
-    private void getPhotoresistorData(){
-        Call<PhotoSensor> photoData = restApi.getPhotoSensorData();
 
         photoData.enqueue(new Callback<PhotoSensor>() {
             @Override
@@ -186,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
                 t.printStackTrace();
             }
         });
+
     }
 
     private boolean isOnline(){
