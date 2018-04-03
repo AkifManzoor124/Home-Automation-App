@@ -12,7 +12,11 @@ import android.os.Bundle;
 
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +30,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import android.provider.Settings;
 import android.view.View;
 import android.util.Log;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -50,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.actionBar);
+        setSupportActionBar(toolbar);
 
         //Definition of texts
         humidDisplayText = (TextView) findViewById(R.id.humidDisplayText);
@@ -70,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
 
         //Dialog for Address Check
         final AlertDialog.Builder checkAddressDialog = new AlertDialog.Builder(this);
-        checkAddressDialog.setTitle("Check Address");
+        checkAddressDialog.setTitle(null);
         checkAddressDialog.setMessage("Is this Address Correct: " + RestApi.ipAddress + "?");
         checkAddressDialog.setPositiveButton("YES", null);
         checkAddressDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
@@ -126,23 +133,37 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.actionbar_menu,menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Intent settingsIntent = new Intent(this,SettingsActivity.class);
+        startActivity(settingsIntent);
+        return super.onOptionsItemSelected(item);
+    }
+
     private void changeText(){
         if(tempHumidData.getTempReading().contains("null") || tempHumidData.getHumidReading().contains("null")){
-            humidDisplayText.setText("Please Connect the Sensor");
-            tempDisplayText.setText("Please Connect the Sensor");
-            tempHumidStatusText.setText("Offline");
+            humidDisplayText.setText(R.string.connectSensor);
+            tempDisplayText.setText(R.string.connectSensor);
+            tempHumidStatusText.setText(R.string.offline);
         }else {
             tempDisplayText.setText(tempHumidData.getTempReading());
             humidDisplayText.setText(tempHumidData.getHumidReading());
-            tempHumidStatusText.setText("Online");
+            tempHumidStatusText.setText(R.string.online);
         }
 
         if(photoSensor.getPhotoReading().contains("null")){
-            photoDisplayText.setText("Please Connect the Sensor");
-            photoStatusDisplayText.setText("Offline");
+            photoDisplayText.setText(R.string.connectSensor);
+            photoStatusDisplayText.setText(R.string.offline);
         }else{
             photoDisplayText.setText(photoSensor.getPhotoReading());
-            photoStatusDisplayText.setText("Online");
+            photoStatusDisplayText.setText(R.string.online);
         }
     }
 

@@ -6,6 +6,11 @@
     android:layout_height="match_parent"
     tools:context="e.akifmanzoor.homeautomation.MainActivity">
 
+    <include
+        layout = "@layout/activity_actionbar"
+        android:id="@+id/actionBar">
+    </include>
+
     <TextView
         android:id="@+id/humidText"
         android:layout_width="wrap_content"
