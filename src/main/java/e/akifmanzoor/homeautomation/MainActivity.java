@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Handler;
 import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
@@ -61,26 +62,26 @@ public class MainActivity extends AppCompatActivity {
         tempHumidData = new TempSensor("null","null","null");
         photoSensor = new PhotoSensor("null","null");
 
+        final Handler dataHandler = new Handler();
+        final int delay = 3000;
+
 
         //Dialog for Address Check
-        AlertDialog.Builder checkAddressDialog = new AlertDialog.Builder(this);
+        final AlertDialog.Builder checkAddressDialog = new AlertDialog.Builder(this);
         checkAddressDialog.setTitle("Check Address");
         checkAddressDialog.setMessage("Is this Address Correct: " + RestApi.ipAddress + "?");
-
+        checkAddressDialog.setPositiveButton("YES", null);
         checkAddressDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
+                checkAddressDialog.setTitle(null);
+                checkAddressDialog.setMessage("Please correct the Address");
+                checkAddressDialog.setNegativeButton("Okay",null);
+                checkAddressDialog.setPositiveButton(null,null);
+                checkAddressDialog.create().show();
             }
         });
-
-        checkAddressDialog.setPositiveButton("YES", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.dismiss();
-            }
-        });
-
         checkAddressDialog.create().show();
 
         //Definition of Retrofit
@@ -90,28 +91,19 @@ public class MainActivity extends AppCompatActivity {
                 .build();
         restApi = retrofit.create(RestApi.class);
 
-        final Runnable dataRun = new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    while(true) {
-                        Thread.sleep(1000);
-                        getSensorData(restApi.getTempSensorData(), restApi.getPhotoSensorData());
-                    }
-                }catch(InterruptedException e){
-                    e.printStackTrace();
-                }
-            }
-        };
-        Thread getDataThread = new Thread(dataRun);
-        getDataThread.start();
-
-        //test code for syncService
         syncBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
                 if (isOnline()){
-                    changeText();
+                    dataHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            getSensorData(restApi.getTempSensorData(), restApi.getPhotoSensorData());
+                            changeText();
+                            dataHandler.postDelayed(this,delay);
+                        }
+                    }, delay);
+
                 }else{
                     createToast("Please Connect to the Internet", Toast.LENGTH_SHORT);
                     startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
@@ -122,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
         desyncBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
+                dataHandler.removeMessages(0);
                 humidDisplayText.setText("-");
                 tempDisplayText.setText("-");
                 tempHumidStatusText.setText("-");
@@ -206,3 +199,9 @@ public class MainActivity extends AppCompatActivity {
         toast.show();
     }
 }
+
+
+
+
+
+
